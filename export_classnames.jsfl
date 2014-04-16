@@ -27,15 +27,23 @@ var sourceDom = null;
 var currentPath = null;
 //当前文件名，带后缀
 var currentFileName = null;
+//导出文件夹
+var destPath = null;
  
 f();
 function f()
 {
-        var folder = fl.browseForFolderURL("选择要导出的文件夹");
+        var folder = fl.browseForFolderURL("选择资源文件夹");
         if (! folder)
         {
                 return;
         }
+		destPath = fl.browseForFolderURL("选择导出目标文件夹");
+        if (! destPath)
+        {
+                return;
+        }
+		fl.trace(destPath);
         var paths = getAllFiles(folder);
         if (confirm("将要批量导出" + paths.length + "个文件"))
         {
@@ -47,21 +55,30 @@ function exportPNG()
 {
 	var target = fl.openDocument(templeteFullPath);
 	var lib = target.library;
-	lib.editItem("empty");
-	target.clipPaste(true);
+	//lib.editItem("empty");
+	lib.selectItem("empty");
+	var tl = lib.getSelectedItems()[0].timeline;
+	//alert(tl.frameCount);
+	fl.trace(tl.frameCount)
+	tl.pasteFrames(0);
+	//target.clipPaste(true);
 	target.exitEditMode();
 	var path = currentPath.replace(currentFileName, "");
-	var savepath = path + currentFileName.replace(".fla", ".png");
+	var savepath = destPath +"/"+ currentFileName.replace(".fla", ".png");
+	alert(savepath);
+	/*
 	var profile = path+"profile.xml";
 	if (target.publishProfiles.indexOf('profile') != -1) {
 	  target.currentPublishProfile = 'profile';   
 	  target.deletePublishProfile();
 	 }
-	//var index = target.importPublishProfile(profile);
-	//fl.trace(index);
+	var index = target.importPublishProfile(profile);
+	fl.trace(index);
+	*/
 	
 	//fl.trace(target.exportPublishProfileString());
 	target.publish(savepath, true);
+	//target.exportPNG(savepath, true);
 	fl.closeDocument(target, false);
 }
 
@@ -114,10 +131,10 @@ function publish(paths)
 				var b = lib.selectItem(elemName);
 				lib.addItemToDocument({x:0,y:0}, elemName);
 				sourceDom.selectAll();
+				lib.editItem(elemName);
 				var tl = lib.getSelectedItems()[0].timeline;
-				fl.trace(tl.frameCount+"-----------"+iFrame) ;
 				tl.copyFrames(iFrame-1);
-				sourceDom.clipCopy();
+				//sourceDom.clipCopy();
 				
 				exportPNG();
 				
