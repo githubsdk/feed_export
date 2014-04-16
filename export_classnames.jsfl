@@ -7,8 +7,11 @@
 
 //资源停到的帧 
 var _stopFrame = 3;
+//文件名
+var NAME = "muban";
 //模板名字
-var templeteName = "templete.fla";
+var suffix = ".fla";
+var templeteName = NAME+suffix;
 //模板文件完整路径
 var templeteFullPath = null;
 //之前文件夹的名字
@@ -19,8 +22,6 @@ var folderName = null;
 var iFrame = 0;
 //资源需要的元件名字
 var elemName = null;
-//标记
-var frameFlag = "templete_";
 //源文件
 var sourceDom = null;
 //v当前路径
@@ -64,8 +65,8 @@ function exportPNG()
 	//target.clipPaste(true);
 	target.exitEditMode();
 	var path = currentPath.replace(currentFileName, "");
-	var savepath = destPath +"/"+ currentFileName.replace(".fla", ".png");
-	alert(savepath);
+	var savepath = FLfile.uriToPlatformPath(destPath) +"\\"+ currentFileName.replace(".fla", "");
+	
 	/*
 	var profile = path+"profile.xml";
 	if (target.publishProfiles.indexOf('profile') != -1) {
@@ -76,10 +77,25 @@ function exportPNG()
 	fl.trace(index);
 	*/
 	
+	var profile = target.exportPublishProfileString();
+	//profile.PublishFormatProperties.pngFileName = currentFileName.replace(".fla", ".png");
+	
+	
+	profile = profile.replace("<defaultNames>1</defaultNames>", "<defaultNames>0</defaultNames>");
+	profile = profile.replace("<pngDefaultName>1</pngDefaultName>", "<pngDefaultName>0</pngDefaultName>");
+	profile = profile.replace("<pngFileName>"+NAME+"</pngFileName>", "<pngFileName>11"+currentFileName.replace(".fla", ".png")+"</pngFileName>");
+	while(profile.indexOf(NAME)!=-1)
+	{
+		profile = profile.replace(NAME, savepath);
+	}
+	
+	
+	target.importPublishProfileString(profile);
 	//fl.trace(target.exportPublishProfileString());
 	target.publish(savepath, true);
 	//target.exportPNG(savepath, true);
 	fl.closeDocument(target, false);
+	return profile;
 }
 
 
@@ -136,11 +152,12 @@ function publish(paths)
 				tl.copyFrames(iFrame-1);
 				//sourceDom.clipCopy();
 				
-				exportPNG();
+				var e = exportPNG();
+				fl.trace(e);
 				
 				fl.closeDocument(sourceDom, false);
         }
-        fl.trace("完成发布");
+       // fl.trace("完成发布");
 }
 
 
