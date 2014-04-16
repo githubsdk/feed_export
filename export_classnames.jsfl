@@ -42,17 +42,27 @@ function f()
                 publish(paths);
         }
 }
-//打开模板文件
-function openTemplete()
+//导出
+function exportPNG()
 {
 	var target = fl.openDocument(templeteFullPath);
 	var lib = target.library;
 	lib.editItem("empty");
-	target.clipPaste();
-	var savepath = currentPath.replace(currentFileName, "") + currentFileName.replace(".fla", ".png");
-	fl.trace(savepath);
-	target.exportPNG(savepath, true);
-	fl.closeDocument(target, true);
+	target.clipPaste(true);
+	target.exitEditMode();
+	var path = currentPath.replace(currentFileName, "");
+	var savepath = path + currentFileName.replace(".fla", ".png");
+	var profile = path+"profile.xml";
+	if (target.publishProfiles.indexOf('profile') != -1) {
+	  target.currentPublishProfile = 'profile';   
+	  target.deletePublishProfile();
+	 }
+	//var index = target.importPublishProfile(profile);
+	//fl.trace(index);
+	
+	//fl.trace(target.exportPublishProfileString());
+	target.publish(savepath, true);
+	fl.closeDocument(target, false);
 }
 
 
@@ -104,10 +114,12 @@ function publish(paths)
 				var b = lib.selectItem(elemName);
 				lib.addItemToDocument({x:0,y:0}, elemName);
 				sourceDom.selectAll();
-				//fl.trace(elemName + "_" + b + " _ " + sourceDom) ;
+				var tl = lib.getSelectedItems()[0].timeline;
+				fl.trace(tl.frameCount+"-----------"+iFrame) ;
+				tl.copyFrames(iFrame-1);
 				sourceDom.clipCopy();
 				
-				openTemplete();
+				exportPNG();
 				
 				fl.closeDocument(sourceDom, false);
         }
