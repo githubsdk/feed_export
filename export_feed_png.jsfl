@@ -1,8 +1,5 @@
 ﻿/************************************************
-导出指定文件夹下的所有.xfl和.fla文件的库中
-设置了链接类名的元件信息
-格式：ElementName=元件名 Type=[元件类型]  LinkName=[链接类名]
-导出位置 ： var configFile = "file:///C|/Documents and Settings/Administrator/Desktop/export_classnames.txt"; 
+
 *************************************************/
 
 //资源停到的帧 
@@ -14,10 +11,6 @@ var suffix = ".fla";
 var templeteName = NAME+suffix;
 //模板文件完整路径
 var templeteFullPath = null;
-//之前文件夹的名字
-var oldFoldername = null;
-//当前文件夹的名字
-var folderName = null;
 //资源需要的帧
 var iFrame = 0;
 //资源需要的元件名字
@@ -26,7 +19,7 @@ var elemName = null;
 var sourceDom = null;
 //v当前路径
 var currentPath = null;
-//当前文件名，带后缀
+//当前文件名，不带后缀
 var currentFileName = null;
 //导出文件夹
 var destPath = null;
@@ -44,7 +37,7 @@ function f()
         {
                 return;
         }
-		fl.trace(destPath);
+		trace(destPath);
         var paths = getAllFiles(folder);
         if (confirm("将要批量导出" + paths.length + "个文件"))
         {
@@ -60,7 +53,7 @@ function exportPNG()
 	lib.selectItem("empty");
 	var tl = lib.getSelectedItems()[0].timeline;
 	//alert(tl.frameCount);
-	fl.trace(tl.frameCount)
+	//trace(tl.frameCount)
 	tl.pasteFrames(0);
 	//target.clipPaste(true);
 	target.exitEditMode();
@@ -74,16 +67,17 @@ function exportPNG()
 	  target.deletePublishProfile();
 	 }
 	var index = target.importPublishProfile(profile);
-	fl.trace(index);
+	trace(index);
 	*/
 	
 	var profile = target.exportPublishProfileString();
-	//profile.PublishFormatProperties.pngFileName = currentFileName.replace(".fla", ".png");
+	var pngname = currentFileName.replace(".fla", ".png");
+	//profile.PublishFormatProperties.pngFileName = pngname
 	
 	
 	profile = profile.replace("<defaultNames>1</defaultNames>", "<defaultNames>0</defaultNames>");
 	profile = profile.replace("<pngDefaultName>1</pngDefaultName>", "<pngDefaultName>0</pngDefaultName>");
-	profile = profile.replace("<pngFileName>"+NAME+"</pngFileName>", "<pngFileName>11"+currentFileName.replace(".fla", ".png")+"</pngFileName>");
+	profile = profile.replace("<pngFileName>"+NAME+"</pngFileName>", "<pngFileName>11"+pngname+"</pngFileName>");
 	while(profile.indexOf(NAME)!=-1)
 	{
 		profile = profile.replace(NAME, savepath);
@@ -91,11 +85,21 @@ function exportPNG()
 	
 	
 	target.importPublishProfileString(profile);
-	//fl.trace(target.exportPublishProfileString());
+	//trace(target.exportPublishProfileString());
 	target.publish(savepath, true);
 	//target.exportPNG(savepath, true);
-	fl.closeDocument(target, false);
+	fl.closeDocument(target, true);
 	return profile;
+}
+
+//从路径名分离出元件名和需要的帧
+function spliceNameAndFrame(path)
+{
+	var parts = path.split("/");
+	var name = parts[parts.length-2];
+	parts = name.split("_");
+	elemName = parts[0];
+	iFrame = parts[1];
 }
 
 
@@ -109,7 +113,7 @@ function publish(paths)
                 }
         }
         fl.outputPanel.clear();
-        fl.trace("开始批量发布");
+        trace("开始批量发布");
 		
 		for each (var path in paths)
         {
@@ -128,47 +132,48 @@ function publish(paths)
 				{
 					continue;
 				}
-				setFlags(path);
+				spliceNameAndFrame(path);
 				//打开资源
 				sourceDom = fl.openDocument(path);				
 				currentPath = path;
 				currentFileName = sourceDom.name;
 				 var lib = sourceDom.library
-				 /*
-				for each(var d in lib.items)
-				{
-					if(d.linkageClassName!=elemName)
-						continue;
-					lib.selectItem(elemName);
-					 fl.trace(sourceDom.selection[0]);
-				}
-				*/
+				 
+				
+				
 				sourceDom.library.selectNone()
 				var b = lib.selectItem(elemName);
-				lib.addItemToDocument({x:0,y:0}, elemName);
-				sourceDom.selectAll();
-				lib.editItem(elemName);
+				//针对命名不规范的，使用遍历查找类名
+				if(b==false)
+				{
+					for each(var d in lib.items)
+					{
+						trace(d.linkageClassName + "_" + d.name)
+						if(d.linkageClassName!=elemName)
+							continue;
+						elemName = d.name;
+						lib.selectItem(elemName);
+						 trace(lib.getSelectedItems()[0]+b+elemName);
+						 break;
+					}
+				}
+				var b = lib.editItem(elemName);
+				trace(b)
 				var tl = lib.getSelectedItems()[0].timeline;
 				tl.copyFrames(iFrame-1);
 				//sourceDom.clipCopy();
 				
-				var e = exportPNG();
-				fl.trace(e);
+			//	var e = exportPNG();
+				//trace(e);
 				
 				fl.closeDocument(sourceDom, false);
         }
-       // fl.trace("完成发布");
+       // trace("完成发布");
 }
 
-
-//获取元件名和帧数
-function setFlags(path)
+function trace(string)
 {
-	var parts = path.split("/");
-	var name = parts[parts.length-2];
-	parts = name.split("_");
-	elemName = parts[0];
-	iFrame = parts[1];
+	fl.trace(string);
 }
 
 function getFiles(folder, type)
