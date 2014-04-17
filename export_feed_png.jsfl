@@ -1,5 +1,6 @@
 ﻿/************************************************
-
+合并文件里的指定帧到muban.fla
+并且将muban中的内容导出png图片到指定文件夹
 *************************************************/
 
 //资源停到的帧 
@@ -54,37 +55,29 @@ function exportPNG()
 	lib.editItem("empty");
 	lib.selectItem("empty");
 	var tl = lib.getSelectedItems()[0].timeline;
-	//alert(tl.frameCount);
 	//trace(tl.frameCount)
-	tl.pasteFrames(0);
-	//target.clipPaste(true);
+	tl.pasteFrames(0);	
 	target.exitEditMode();
 	var path = currentPath.replace(currentFileName, "");
 	var savepath = FLfile.uriToPlatformPath(destPath) +"\\"+ currentFileName.replace(".fla", "");
-	alert(savepath)
+	//alert(savepath)
 	
 	//修改导出配置
 	var profile = target.exportPublishProfileString();
 	var pngname = currentFileName.replace(".fla", ".png");
-	//profile.PublishFormatProperties.pngFileName = pngname
-	
-	
 	profile = profile.replace("<defaultNames>1</defaultNames>", "<defaultNames>0</defaultNames>");
 	profile = profile.replace("<pngDefaultName>1</pngDefaultName>", "<pngDefaultName>0</pngDefaultName>");
 	profile = profile.replace("<pngFileName>"+NAME+"</pngFileName>", "<pngFileName>11"+pngname+"</pngFileName>");
-	/*
+	trace(profile)
 	while(profile.indexOf(NAME)!=-1)
 	{
 		profile = profile.replace(NAME, savepath);
 	}
-	*/
-	
-	
 	target.importPublishProfileString(profile);
+	
 	//trace(target.exportPublishProfileString());
 	target.publish(savepath, true);
 	allPNG = allPNG + "\n" + savepath;
-	//target.exportPNG(savepath, true);
 	fl.closeDocument(target, false);
 	return profile;
 }
@@ -96,6 +89,7 @@ function spliceNameAndFrame(path)
 	var name = parts[parts.length-2];
 	parts = name.split("_");
 	elemName = parts[0];
+	elemName = elemName.replace("[d]", currentFileName.replace(".fla", ""))
 	iFrame = parts[1];
 }
 
@@ -141,16 +135,14 @@ function publish(paths)
 					continue;
 				}
 				
-				spliceNameAndFrame(path);
 				//打开资源
 				sourceDom = fl.openDocument(path);				
 				buildTempletePath(path, sourceDom.name);
 				currentPath = path;
 				currentFileName = sourceDom.name;
+				spliceNameAndFrame(path);
+				
 				 var lib = sourceDom.library
-				 
-				
-				
 				sourceDom.library.selectNone()
 				var b = lib.selectItem(elemName);
 				//针对命名不规范的，使用遍历查找类名
