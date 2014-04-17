@@ -104,6 +104,8 @@ function updateItems(dom)
 
 function executeParam(item, dom)
 {
+	if(params==null || params=="")
+		return;
 	var pl = params.split("-");
 	for each(var param in pl)
 	{
