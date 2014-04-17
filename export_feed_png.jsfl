@@ -87,7 +87,7 @@ function exportPNG()
 	//trace(target.exportPublishProfileString());
 	target.publish(savepath, true);
 	allPNG = allPNG + "\n" + savepath;
-	//fl.closeDocument(target, false);
+	fl.closeDocument(target, false);
 	return profile;
 }
 
@@ -111,24 +111,22 @@ function executeParam(item, dom)
 		var paraminfo = param.split("=");
 		var name = paraminfo[0];
 		var values = paraminfo[1];
-		alert(item.name+"_"+name);
 		if(item.name==name)
 		{
 			item.selected = true;
+			var mx = 0;
+			var my = 0;
 			//水平居中
 			if(values.indexOf("h")>=0)
 			{
-				//item.x = -item.left-item.width/2;
-				dom.moveSelectionBy({x:item.x-item.left-item.width/2})
-				allPNG = allPNG + "\n" + item.left+" " + item.name;
+				mx = item.x-item.left-item.width/2;
 			}
 			//垂直居中
 			if(values.indexOf("v")>=0)
 			{
-				//item.x = -item.left-item.width/2;
-				dom.moveSelectionBy({y:item.y-item.top-item.height/2})
-				allPNG = allPNG + "\n" + item.left+" " + item.name;
+				my = item.y-item.top-item.height/2
 			}
+			dom.moveSelectionBy({x:mx, y:my})
 		}else{
 			item.selected = false;
 		}
