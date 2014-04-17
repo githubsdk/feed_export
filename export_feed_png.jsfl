@@ -26,6 +26,15 @@ var currentFileName = null;
 var destPath = null;
 //记录导出的文件名
 var allPNG = "";
+/*
+参数 格式 
+name1=h-name2=v-name3=vh
+name 要修改的元件名字
+=之后为自选参数
+v=垂直居中
+h=水平居中
+*/
+var params = "";
  
 f();
 function f()
@@ -60,7 +69,6 @@ function exportPNG()
 	target.exitEditMode();
 	var path = currentPath.replace(currentFileName, "");
 	var savepath = FLfile.uriToPlatformPath(destPath) +"\\"+ currentFileName.replace(".fla", "");
-	//alert(savepath)
 	
 	//修改导出配置
 	var profile = target.exportPublishProfileString();
@@ -68,18 +76,69 @@ function exportPNG()
 	profile = profile.replace("<defaultNames>1</defaultNames>", "<defaultNames>0</defaultNames>");
 	profile = profile.replace("<pngDefaultName>1</pngDefaultName>", "<pngDefaultName>0</pngDefaultName>");
 	profile = profile.replace("<pngFileName>"+NAME+"</pngFileName>", "<pngFileName>11"+pngname+"</pngFileName>");
-	trace(profile)
+	//trace(profile)
 	while(profile.indexOf(NAME)!=-1)
 	{
 		profile = profile.replace(NAME, savepath);
 	}
 	target.importPublishProfileString(profile);
-	
+	updateItems(target);
+	//发布文件
 	//trace(target.exportPublishProfileString());
 	target.publish(savepath, true);
 	allPNG = allPNG + "\n" + savepath;
-	fl.closeDocument(target, false);
+	//fl.closeDocument(target, false);
 	return profile;
+}
+
+function updateItems(dom)
+{
+	dom.selectAll();
+	for (var i=0;i<dom.selection.length; ++i)
+	{
+		var item = dom.selection[i];
+		allPNG = allPNG + "\n" + item.left+" " + item.name;
+		executeParam(item, dom);
+	}
+}
+
+function executeParam(item, dom)
+{
+	var pl = params.split("-");
+	for each(var param in pl)
+	{
+		dom.selectNone();
+		var paraminfo = param.split("=");
+		var name = paraminfo[0];
+		var values = paraminfo[1];
+		alert(item.name+"_"+name);
+		if(item.name==name)
+		{
+			item.selected = true;
+			//水平居中
+			if(values.indexOf("h")>=0)
+			{
+				//item.x = -item.left-item.width/2;
+				dom.moveSelectionBy({x:item.x-item.left-item.width/2})
+				allPNG = allPNG + "\n" + item.left+" " + item.name;
+			}
+			//垂直居中
+			if(values.indexOf("v")>=0)
+			{
+				//item.x = -item.left-item.width/2;
+				dom.moveSelectionBy({y:item.y-item.top-item.height/2})
+				allPNG = allPNG + "\n" + item.left+" " + item.name;
+			}
+		}else{
+			item.selected = false;
+		}
+	}
+}
+
+//检查是否有指定参数
+function checkParam(key)
+{
+	return params.search(key)>=0;
 }
 
 //从路径名分离出元件名和需要的帧
@@ -91,6 +150,7 @@ function spliceNameAndFrame(path)
 	elemName = parts[0];
 	elemName = elemName.replace("[d]", currentFileName.replace(".fla", ""))
 	iFrame = parts[1];
+	params = parts[2] || "";
 }
 
 //设置模板文件路径
@@ -98,7 +158,6 @@ function buildTempletePath(path, fileName)
 {
 	trace(path + fileName);
 	templeteFullPath = path.replace(fileName, templeteName);
-	
 }
 
 
@@ -161,7 +220,6 @@ function publish(paths)
 				}
 				// trace(lib.getSelectedItems()[0]+b+elemName);
 				var b = lib.editItem(elemName);
-				trace(b)
 				var tl = lib.getSelectedItems()[0].timeline;
 				//选择包含有效资源的图层
 				for(var i=0; i < tl.layers.length; ++i)
