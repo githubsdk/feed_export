@@ -23,6 +23,8 @@ var currentPath = null;
 var currentFileName = null;
 //导出文件夹
 var destPath = null;
+//记录导出的文件名
+var allPNG = "";
  
 f();
 function f()
@@ -49,7 +51,7 @@ function exportPNG()
 {
 	var target = fl.openDocument(templeteFullPath);
 	var lib = target.library;
-	//lib.editItem("empty");
+	lib.editItem("empty");
 	lib.selectItem("empty");
 	var tl = lib.getSelectedItems()[0].timeline;
 	//alert(tl.frameCount);
@@ -59,17 +61,9 @@ function exportPNG()
 	target.exitEditMode();
 	var path = currentPath.replace(currentFileName, "");
 	var savepath = FLfile.uriToPlatformPath(destPath) +"\\"+ currentFileName.replace(".fla", "");
+	alert(savepath)
 	
-	/*
-	var profile = path+"profile.xml";
-	if (target.publishProfiles.indexOf('profile') != -1) {
-	  target.currentPublishProfile = 'profile';   
-	  target.deletePublishProfile();
-	 }
-	var index = target.importPublishProfile(profile);
-	trace(index);
-	*/
-	
+	//修改导出配置
 	var profile = target.exportPublishProfileString();
 	var pngname = currentFileName.replace(".fla", ".png");
 	//profile.PublishFormatProperties.pngFileName = pngname
@@ -78,17 +72,20 @@ function exportPNG()
 	profile = profile.replace("<defaultNames>1</defaultNames>", "<defaultNames>0</defaultNames>");
 	profile = profile.replace("<pngDefaultName>1</pngDefaultName>", "<pngDefaultName>0</pngDefaultName>");
 	profile = profile.replace("<pngFileName>"+NAME+"</pngFileName>", "<pngFileName>11"+pngname+"</pngFileName>");
+	/*
 	while(profile.indexOf(NAME)!=-1)
 	{
 		profile = profile.replace(NAME, savepath);
 	}
+	*/
 	
 	
 	target.importPublishProfileString(profile);
 	//trace(target.exportPublishProfileString());
 	target.publish(savepath, true);
+	allPNG = allPNG + "\n" + savepath;
 	//target.exportPNG(savepath, true);
-	fl.closeDocument(target, true);
+	fl.closeDocument(target, false);
 	return profile;
 }
 
@@ -100,6 +97,14 @@ function spliceNameAndFrame(path)
 	parts = name.split("_");
 	elemName = parts[0];
 	iFrame = parts[1];
+}
+
+//设置模板文件路径
+function buildTempletePath(path, fileName)
+{
+	trace(path + fileName);
+	templeteFullPath = path.replace(fileName, templeteName);
+	
 }
 
 
@@ -115,6 +120,7 @@ function publish(paths)
         fl.outputPanel.clear();
         trace("开始批量发布");
 		
+		/*
 		for each (var path in paths)
         {
 				//跳过模板
@@ -124,17 +130,21 @@ function publish(paths)
 					break
 				}
 		}
+		*/
 		
         for each (var path in paths)
         {
+			
 				//跳过模板
 				if(path.search(templeteName)>=0)
 				{
 					continue;
 				}
+				
 				spliceNameAndFrame(path);
 				//打开资源
 				sourceDom = fl.openDocument(path);				
+				buildTempletePath(path, sourceDom.name);
 				currentPath = path;
 				currentFileName = sourceDom.name;
 				 var lib = sourceDom.library
@@ -153,22 +163,35 @@ function publish(paths)
 							continue;
 						elemName = d.name;
 						lib.selectItem(elemName);
-						 trace(lib.getSelectedItems()[0]+b+elemName);
+						
 						 break;
 					}
 				}
+				// trace(lib.getSelectedItems()[0]+b+elemName);
 				var b = lib.editItem(elemName);
 				trace(b)
 				var tl = lib.getSelectedItems()[0].timeline;
+				//选择包含有效资源的图层
+				for(var i=0; i < tl.layers.length; ++i)
+				{
+					var layer = tl.layers[i];
+					if(layer.frameCount==iFrame&&layer.layerType!="guided")
+					{
+						tl.currentLayer = i;
+						break;
+					}
+				}
+				
 				tl.copyFrames(iFrame-1);
+				tl.pasteFrames(0);
 				//sourceDom.clipCopy();
 				
-			//	var e = exportPNG();
+				var e = exportPNG();
 				//trace(e);
 				
 				fl.closeDocument(sourceDom, false);
         }
-       // trace("完成发布");
+       trace(allPNG);
 }
 
 function trace(string)
